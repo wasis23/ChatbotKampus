@@ -1,0 +1,1196 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ISA Admin Panel - Politeknik Indonusa Surakarta</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    <style>
+        :root {
+            --primary: #2563eb;
+            --primary-hover: #1d4ed8;
+            --sidebar-bg: #0f172a;
+            --sidebar-hover: #1e293b;
+            --sidebar-active: #3b82f6;
+            --text-main: #1e293b;
+            --text-muted: #64748b;
+            --bg-main: #f1f5f9;
+            --bg-card: #ffffff;
+            --border: #e2e8f0;
+            --success: #10b981;
+            --danger: #ef4444;
+            --warning: #f59e0b;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Inter', sans-serif;
+        }
+
+        body {
+            display: flex;
+            height: 100vh;
+            background-color: var(--bg-main);
+            color: var(--text-main);
+            overflow: hidden;
+        }
+
+        /* --- SIDEBAR --- */
+        .sidebar {
+            width: 280px;
+            background-color: var(--sidebar-bg);
+            color: #f8fafc;
+            display: flex;
+            flex-direction: column;
+            overflow-y: auto;
+            transition: all 0.3s ease;
+        }
+
+        .sidebar::-webkit-scrollbar { width: 6px; }
+        .sidebar::-webkit-scrollbar-thumb { background: #334155; border-radius: 4px; }
+
+        .logo-area {
+            padding: 24px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            border-bottom: 1px solid #1e293b;
+        }
+
+        .logo-area .avatar {
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(135deg, #3b82f6, #2563eb);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 1.2rem;
+            box-shadow: 0 4px 12px rgba(37, 99, 235, 0.4);
+        }
+
+        .nav-menu { padding: 16px 0; }
+        
+        .nav-group-title {
+            padding: 12px 24px 8px;
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: #94a3b8;
+            font-weight: 600;
+        }
+
+        .nav-item {
+            padding: 10px 24px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            color: #cbd5e1;
+            cursor: pointer;
+            text-decoration: none;
+            transition: all 0.2s;
+            font-size: 0.95rem;
+        }
+
+        .nav-item:hover {
+            background-color: var(--sidebar-hover);
+            color: white;
+        }
+
+        .nav-item.active {
+            background-color: rgba(59, 130, 246, 0.15);
+            color: var(--sidebar-active);
+            border-right: 4px solid var(--sidebar-active);
+        }
+
+        .nav-item i { font-size: 1.2rem; }
+
+        .sub-menu {
+            display: none;
+            flex-direction: column;
+            background: #0b1120;
+        }
+
+        .sub-menu.open { display: flex; }
+
+        .sub-item {
+            padding: 8px 24px 8px 50px;
+            color: #94a3b8;
+            font-size: 0.85rem;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .sub-item:hover { color: white; }
+        .sub-item.active { color: var(--sidebar-active); font-weight: 500; }
+
+        .nav-item.has-sub { justify-content: space-between; }
+        .nav-item-left { display: flex; align-items: center; gap: 12px; }
+        .caret { transition: transform 0.3s; font-size: 0.8rem;}
+        .nav-item.has-sub.open .caret { transform: rotate(90deg); }
+
+        /* --- MAIN CONTENT --- */
+        .main-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow-y: auto;
+        }
+
+        .header {
+            height: 70px;
+            background: var(--bg-card);
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 32px;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+
+        .header-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+        }
+
+        .header-actions {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .admin-profile {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            cursor: pointer;
+        }
+
+        .admin-profile img {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: #e2e8f0;
+        }
+
+        .content-area {
+            padding: 32px;
+            flex: 1;
+        }
+
+        .page-section { display: none; animation: fadeIn 0.4s ease; }
+        .page-section.active { display: block; }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* --- UI COMPONENTS --- */
+        .card {
+            background: var(--bg-card);
+            border-radius: 12px;
+            border: 1px solid var(--border);
+            padding: 24px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+            margin-bottom: 24px;
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .card-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+        }
+
+        .grid-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 20px;
+            margin-bottom: 24px;
+        }
+
+        .stat-card {
+            background: var(--bg-card);
+            padding: 20px;
+            border-radius: 12px;
+            border: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+            transition: transform 0.2s;
+        }
+        .stat-card:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
+
+        .stat-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 12px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 1.5rem;
+        }
+
+        .stat-info p { font-size: 0.85rem; color: var(--text-muted); margin-bottom: 4px; }
+        .stat-info h3 { font-size: 1.5rem; color: var(--text-main); }
+
+        /* Form Elements */
+        .form-group { margin-bottom: 20px; }
+        .form-group label { display: block; margin-bottom: 8px; font-weight: 500; font-size: 0.9rem; }
+        .form-control {
+            width: 100%;
+            padding: 10px 14px;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            font-size: 0.95rem;
+            transition: all 0.2s;
+            background: #f8fafc;
+        }
+        .form-control:focus {
+            outline: none;
+            border-color: var(--primary);
+            background: white;
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+        }
+        textarea.form-control { resize: vertical; min-height: 100px; }
+
+        .btn {
+            padding: 10px 20px;
+            border-radius: 8px;
+            border: none;
+            font-size: 0.95rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .btn-primary { background: var(--primary); color: white; }
+        .btn-primary:hover { background: var(--primary-hover); transform: translateY(-1px); box-shadow: 0 4px 12px rgba(37, 99, 235, 0.2); }
+        .btn-outline { background: transparent; border: 1px solid var(--border); color: var(--text-main); }
+        .btn-outline:hover { background: #f1f5f9; }
+        .btn-danger { background: #fef2f2; color: var(--danger); }
+        .btn-danger:hover { background: #fee2e2; }
+
+        /* Tables */
+        .table-responsive { overflow-x: auto; }
+        table { width: 100%; border-collapse: collapse; }
+        th, td { padding: 12px 16px; text-align: left; border-bottom: 1px solid var(--border); font-size: 0.9rem; }
+        th { background: #f8fafc; font-weight: 600; color: var(--text-muted); text-transform: uppercase; font-size: 0.75rem; letter-spacing: 0.05em; }
+        tr:hover td { background: #f8fafc; }
+        .badge { padding: 4px 8px; border-radius: 20px; font-size: 0.75rem; font-weight: 600; }
+        .badge-success { background: #d1fae5; color: #047857; }
+        .badge-warning { background: #fef3c7; color: #b45309; }
+
+        /* Upload Area */
+        .upload-area {
+            border: 2px dashed var(--border);
+            border-radius: 12px;
+            padding: 40px;
+            text-align: center;
+            background: #f8fafc;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .upload-area:hover { border-color: var(--primary); background: #eff6ff; }
+        .upload-area i { font-size: 3rem; color: var(--text-muted); margin-bottom: 16px; }
+
+        /* Progress Bar */
+        .progress-wrapper { width: 100%; height: 8px; background: #e2e8f0; border-radius: 4px; overflow: hidden; margin-top: 8px; }
+        .progress-bar { height: 100%; background: var(--primary); width: 0%; transition: width 0.3s; }
+
+        /* Range Slider */
+        input[type=range] { width: 100%; margin-top: 8px; }
+
+        .flex-row { display: flex; gap: 16px; align-items: flex-end; }
+        .flex-1 { flex: 1; }
+        .mb-4 { margin-bottom: 16px; }
+        .mt-4 { margin-top: 16px; }
+        
+    </style>
+</head>
+<body>
+
+    <!-- SIDEBAR -->
+    <aside class="sidebar">
+        <div class="logo-area">
+            <div class="avatar">I</div>
+            <div>
+                <h2 style="font-size: 1rem; font-weight: 600;">ISA Admin</h2>
+                <p style="font-size: 0.75rem; color: #94a3b8;">v1.0.0 Panel</p>
+            </div>
+        </div>
+
+        <div class="nav-menu">
+            <a class="nav-item active" data-target="dashboard">
+                <i class="ph ph-squares-four"></i> Dashboard
+            </a>
+
+            <div class="nav-group-title">Knowledge Base</div>
+            <div class="nav-item has-sub" onclick="toggleSub(this)">
+                <div class="nav-item-left"><i class="ph ph-books"></i> Database</div>
+                <i class="ph ph-caret-right caret"></i>
+            </div>
+            <div class="sub-menu">
+                <a class="sub-item" data-target="kb-dokumen">Dokumen</a>
+                <a class="sub-item" data-target="kb-kategori">Kategori</a>
+                <a class="sub-item" data-target="kb-embedding">Embedding</a>
+                <a class="sub-item" data-target="kb-faq">Dataset FAQ</a>
+            </div>
+
+            <div class="nav-group-title">AI & Chatbot</div>
+            <div class="nav-item has-sub" onclick="toggleSub(this)">
+                <div class="nav-item-left"><i class="ph ph-brain"></i> Kecerdasan AI</div>
+                <i class="ph ph-caret-right caret"></i>
+            </div>
+            <div class="sub-menu">
+                <a class="sub-item" data-target="ai-prompt">Prompt</a>
+                <a class="sub-item" data-target="ai-model">Model</a>
+                <a class="sub-item" data-target="ai-playground">Playground</a>
+                <a class="sub-item" data-target="ai-fallback">Fallback</a>
+                <a class="sub-item" data-target="ai-guardrail">Guardrail</a>
+            </div>
+
+            <div class="nav-group-title">Monitoring</div>
+            <div class="nav-item has-sub" onclick="toggleSub(this)">
+                <div class="nav-item-left"><i class="ph ph-chart-line-up"></i> Analisis</div>
+                <i class="ph ph-caret-right caret"></i>
+            </div>
+            <div class="sub-menu">
+                <a class="sub-item" data-target="mon-percakapan">Percakapan</a>
+                <a class="sub-item" data-target="mon-feedback">Feedback</a>
+                <a class="sub-item" data-target="mon-handoff">Human Handoff</a>
+                <a class="sub-item" data-target="mon-analytics">Analytics</a>
+                <a class="sub-item" data-target="mon-token">Token Usage</a>
+            </div>
+
+            <div class="nav-group-title">Appearance</div>
+            <a class="nav-item" data-target="app-widget" onclick="removeActiveAll(); this.classList.add('active'); setHeader(this.textContent); showSection('app-widget');">
+                <i class="ph ph-paint-brush"></i> Chat Widget
+            </a>
+
+            <div class="nav-group-title">System</div>
+            <a class="nav-item" data-target="sys-pengaturan" onclick="removeActiveAll(); this.classList.add('active'); setHeader(this.textContent); showSection('sys-pengaturan');">
+                <i class="ph ph-gear"></i> Pengaturan
+            </a>
+        </div>
+    </aside>
+
+    <!-- MAIN CONTENT -->
+    <main class="main-content">
+        <header class="header">
+            <h1 class="header-title" id="top-title">Dashboard</h1>
+            <div class="header-actions">
+                <button class="btn btn-outline" style="padding: 8px;"><i class="ph ph-bell"></i></button>
+                <div class="admin-profile" style="display: flex; align-items: center; gap: 12px;">
+                    <div style="text-align: right;">
+                        <p style="font-size: 0.85rem; font-weight: 600;">Admin Indonusa</p>
+                        <p style="font-size: 0.75rem; color: var(--text-muted);">Super Admin</p>
+                    </div>
+                    <img src="https://ui-avatars.com/api/?name=Admin&background=2563eb&color=fff" alt="Admin">
+                    <a href="/api/logout" style="display: flex; align-items: center; gap: 4px; padding: 6px 12px; background: #fee2e2; color: #ef4444; border-radius: 8px; font-size: 12px; font-weight: 600; text-decoration: none; border: 1px solid #fecaca; transition: all 0.2s;" onmouseover="this.style.background='#fecaca'" onmouseout="this.style.background='#fee2e2'">
+                        <i class="ph ph-sign-out"></i> Keluar
+                    </a>
+                </div>
+            </div>
+        </header>
+
+        <div class="content-area">
+            
+            <!-- SECTION: DASHBOARD -->
+            <div id="dashboard" class="page-section active">
+                <div class="grid-cards">
+                    <div class="stat-card">
+                        <div class="stat-icon" style="background: #e0f2fe; color: #0284c7;"><i class="ph ph-chat-circle-dots"></i></div>
+                        <div class="stat-info"><p>Pertanyaan Hari Ini</p><h3 id="stat-queries">0</h3></div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon" style="background: #dcfce3; color: #16a34a;"><i class="ph ph-users"></i></div>
+                        <div class="stat-info"><p>Pengguna Aktif</p><h3 id="stat-users">0</h3></div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon" style="background: #fef9c3; color: #ca8a04;"><i class="ph ph-files"></i></div>
+                        <div class="stat-info"><p>Dokumen Basis Pengetahuan</p><h3 id="stat-docs">0</h3></div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon" style="background: #fee2e2; color: #dc2626;"><i class="ph ph-coin"></i></div>
+                        <div class="stat-info"><p>Estimasi Token Terpakai</p><h3 id="stat-tokens">0</h3><small style="color:var(--text-muted);font-size:11px;" id="stat-cost">$0.00</small></div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <h3 class="card-title">Performa Chatbot (7 Hari Terakhir)</h3>
+                    </div>
+                    <div style="height: 300px; display: flex; align-items: flex-end; gap: 10px; padding-top: 20px;">
+                        <div style="flex:1; background: #93c5fd; height: 40%; border-radius: 4px 4px 0 0;"></div>
+                        <div style="flex:1; background: #93c5fd; height: 60%; border-radius: 4px 4px 0 0;"></div>
+                        <div style="flex:1; background: #2563eb; height: 90%; border-radius: 4px 4px 0 0;"></div>
+                        <div style="flex:1; background: #93c5fd; height: 50%; border-radius: 4px 4px 0 0;"></div>
+                        <div style="flex:1; background: #93c5fd; height: 70%; border-radius: 4px 4px 0 0;"></div>
+                        <div style="flex:1; background: #2563eb; height: 100%; border-radius: 4px 4px 0 0;"></div>
+                        <div style="flex:1; background: #93c5fd; height: 80%; border-radius: 4px 4px 0 0;"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- SECTION: KB - DOKUMEN -->
+            <div id="kb-dokumen" class="page-section">
+                <div class="card">
+                    <div class="card-header">
+                        <h3 class="card-title">Upload Dokumen Baru</h3>
+                    </div>
+                    <label for="file-upload" class="upload-area" style="display:block;">
+                        <i class="ph ph-cloud-arrow-up"></i>
+                        <h3>Klik untuk mencari file dari komputer Anda (PDF, Max 10MB)</h3>
+                        <input type="file" id="file-upload" accept=".pdf" style="display:none;">
+                    </label>
+                </div>
+                <div class="card">
+                    <div class="card-header">
+                        <h3 class="card-title">Daftar Dokumen</h3>
+                    </div>
+                    <div class="table-responsive">
+                        <table>
+                            <thead><tr><th>Nama Dokumen</th><th>Kategori</th><th>Ukuran</th><th>Tgl Upload</th><th>Aksi</th></tr></thead>
+                            <tbody id="docs-tbody">
+                                <!-- Data will be loaded here -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- SECTION: KB - KATEGORI -->
+            <div id="kb-kategori" class="page-section">
+                <div class="card">
+                    <div class="card-header"><h3 class="card-title">Kategori Dokumen</h3><button class="btn btn-primary"><i class="ph ph-plus"></i> Tambah Kategori</button></div>
+                    <div class="table-responsive">
+                        <table>
+                            <thead><tr><th>Nama Kategori</th><th>Jumlah Dokumen</th><th>Aksi</th></tr></thead>
+                            <tbody>
+                                <tr><td>Akademik</td><td>24</td><td><button class="btn btn-outline">Edit</button></td></tr>
+                                <tr><td>Keuangan</td><td>8</td><td><button class="btn btn-outline">Edit</button></td></tr>
+                                <tr><td>PMB</td><td>12</td><td><button class="btn btn-outline">Edit</button></td></tr>
+                                <tr><td>Prodi</td><td>5</td><td><button class="btn btn-outline">Edit</button></td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- SECTION: KB - EMBEDDING -->
+            <div id="kb-embedding" class="page-section">
+                <div class="card">
+                    <h3 class="card-title mb-4">Proses Indexing & Embedding</h3>
+                    <p style="margin-bottom: 20px; color: var(--text-muted);">Proses ini akan memecah seluruh dokumen PDF menjadi chunk, membuat embedding, dan menyimpannya ke Vector Database (ChromaDB).</p>
+                    <button class="btn btn-primary mb-4" onclick="startEmbedding()"><i class="ph ph-arrows-clockwise"></i> Mulai Indexing Sekarang</button>
+                    
+                    <div id="embedding-progress" style="display: none; margin-top: 20px;">
+                        <div style="display:flex; justify-content:space-between; margin-bottom:8px;">
+                            <span style="font-size:0.9rem; font-weight:500;" id="embed-status">Memproses...</span>
+                            <span style="font-size:0.9rem; color:var(--primary);" id="embed-pct">0%</span>
+                        </div>
+                        <div class="progress-wrapper"><div class="progress-bar" id="embed-bar"></div></div>
+                    </div>
+                </div>
+                <div class="grid-cards">
+                    <div class="stat-card">
+                        <div class="stat-icon" style="background:#e0e7ff; color:#4f46e5;"><i class="ph ph-database"></i></div>
+                        <div class="stat-info"><p>Total Chunk di Vector DB</p><h3 id="stat-chunks">1,420</h3></div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon" style="background:#dcfce3; color:#16a34a;"><i class="ph ph-check-circle"></i></div>
+                        <div class="stat-info"><p>Status Sync</p><h3 style="color:#16a34a;">Up to Date</h3></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- SECTION: KB - FAQ -->
+            <div id="kb-faq" class="page-section">
+                <div class="card">
+                    <div class="card-header"><h3 class="card-title">Data Training Manual (Dataset FAQ)</h3><button class="btn btn-primary"><i class="ph ph-plus"></i> Tambah FAQ</button></div>
+                    <div class="table-responsive">
+                        <table>
+                            <thead><tr><th>Pertanyaan (Pemicu)</th><th>Jawaban Manual</th><th>Aksi</th></tr></thead>
+                            <tbody>
+                                <tr><td>Siapa rektor indonusa?</td><td>Rektor Politeknik Indonusa Surakarta saat ini adalah...</td><td><button class="btn btn-outline">Edit</button></td></tr>
+                                <tr><td>Alamat kampus dimana?</td><td>Kampus berlokasi di Jl. Palem Raya...</td><td><button class="btn btn-outline">Edit</button></td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- SECTION: AI - PROMPT -->
+            <div id="ai-prompt" class="page-section">
+                <div class="card">
+                    <h3 class="card-title mb-4">Prompt Management</h3>
+                    <div class="form-group">
+                        <label>System Prompt (Instruksi Inti)</label>
+                        <textarea id="input-sys-prompt" class="form-control" style="height: 200px;"></textarea>
+                    </div>
+                    <button class="btn btn-primary" onclick="saveSettings('prompt')">Simpan Prompt</button>
+                </div>
+            </div>
+
+            <!-- SECTION: AI - MODEL -->
+            <div id="ai-model" class="page-section">
+                <div class="card">
+                    <h3 class="card-title mb-4">Model Settings</h3>
+                    <div class="form-group">
+                        <label>LLM Engine (OpenAI)</label>
+                        <select id="input-llm" class="form-control">
+                            <option value="gpt-4.1-nano">gpt-4.1-nano</option>
+                            <option value="gpt-4o-mini">gpt-4o-mini</option>
+                            <option value="gpt-4o">gpt-4o</option>
+                            <option value="gpt-3.5-turbo">gpt-3.5-turbo</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Temperature (<span id="val-temp">0.4</span>) - Mengatur Kreativitas</label>
+                        <input type="range" id="input-temp" min="0" max="1" step="0.1" value="0.4" oninput="document.getElementById('val-temp').innerText = this.value">
+                    </div>
+                    <div class="form-group">
+                        <label>Top-K Retrieval (<span id="val-topk">4</span>) - Jumlah chunk yang dicari</label>
+                        <input type="range" id="input-topk" min="1" max="10" step="1" value="4" oninput="document.getElementById('val-topk').innerText = this.value">
+                    </div>
+                    <button class="btn btn-primary" onclick="saveSettings('model')">Simpan Pengaturan Model</button>
+                </div>
+            </div>
+
+            <!-- SECTION: AI - PLAYGROUND -->
+            <div id="ai-playground" class="page-section">
+                <div class="card" style="height: 600px; display:flex; flex-direction:column; padding:0; overflow:hidden;">
+                    <div class="card-header" style="padding:20px; border-bottom:1px solid var(--border); margin:0;">
+                        <h3 class="card-title" style="margin:0;">Chatbot Testing / Playground</h3>
+                    </div>
+                    <div id="pg-chat" style="flex:1; background:#f8fafc; padding:20px; overflow-y:auto; display:flex; flex-direction:column; gap:16px;">
+                        <div style="align-self:flex-start; background:white; padding:12px 16px; border-radius:12px; box-shadow:0 1px 2px rgba(0,0,0,0.05); max-width:80%;">
+                            Halo Admin! Ini adalah area pengujian. Silakan ketik pesan untuk melihat bagaimana saya merespons sebelum dipakai oleh mahasiswa.
+                        </div>
+                    </div>
+                    <div style="padding:16px; background:white; border-top:1px solid var(--border); display:flex; gap:12px;">
+                        <input type="text" id="pg-input" class="form-control" placeholder="Ketik pesan ujian..." onkeypress="if(event.key==='Enter') sendPlaygroundMsg()">
+                        <button class="btn btn-primary" onclick="sendPlaygroundMsg()"><i class="ph ph-paper-plane-right"></i></button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- SECTION: AI - FALLBACK & GUARDRAIL -->
+            <div id="ai-fallback" class="page-section">
+                <div class="card">
+                    <h3 class="card-title mb-4">Fallback Response</h3>
+                    <p style="color:var(--text-muted); margin-bottom:16px;">Pesan default yang dikirim jika sistem gagal menjawab, database kosong, atau sistem down.</p>
+                    <div class="form-group">
+                        <textarea id="input-fallback" class="form-control" style="height: 100px;"></textarea>
+                    </div>
+                    <button class="btn btn-primary" onclick="saveSettings('fallback')">Simpan Fallback</button>
+                </div>
+            </div>
+
+            <div id="ai-guardrail" class="page-section">
+                <div class="card">
+                    <h3 class="card-title mb-4">Blacklist & Guardrail</h3>
+                    <div class="form-group">
+                        <label>Filter Kata Kasar / Terlarang (pisahkan dengan koma)</label>
+                        <textarea id="input-blocked" class="form-control" style="height: 100px;"></textarea>
+                    </div>
+                    <div class="form-group" style="display:flex; align-items:center; gap:12px;">
+                        <input type="checkbox" id="block-prompt-inj" style="width:18px; height:18px;">
+                        <label for="block-prompt-inj" style="margin:0;">Aktifkan Perlindungan Prompt Injection (Guardrail AI)</label>
+                    </div>
+                    <button class="btn btn-primary mt-4" onclick="saveSettings('guardrail')">Update Guardrail</button>
+                </div>
+            </div>
+
+            <!-- SECTION: MONITORING - PERCAKAPAN -->
+            <div id="mon-percakapan" class="page-section">
+                <div class="card" style="height: 700px; display: flex; flex-direction: row; padding: 0; overflow: hidden;">
+                    <!-- Bagian Kiri: Daftar Sesi -->
+                    <div style="flex: 1; min-width: 250px; max-width: 350px; border-right: 1px solid var(--border); display: flex; flex-direction: column; background: white;">
+                        <div class="card-header" style="padding: 16px; border-bottom: 1px solid var(--border); margin: 0;">
+                            <h3 class="card-title" style="margin: 0;">Daftar Sesi</h3>
+                        </div>
+                        <div id="chat-list" style="flex: 1; overflow-y: auto;">
+                            <!-- Data akan dimuat di sini -->
+                            <div style="padding: 20px; text-align: center; color: var(--text-muted);">Memuat riwayat...</div>
+                        </div>
+                    </div>
+                    <!-- Bagian Kanan: Preview Chat -->
+                    <div style="flex: 2; display: flex; flex-direction: column; background: #f8fafc;">
+                        <div class="card-header" style="padding: 16px; border-bottom: 1px solid var(--border); margin: 0; background: white; display: flex; justify-content: space-between; align-items: center;">
+                            <h3 class="card-title" style="margin: 0;" id="chat-preview-title">Pilih Sesi</h3>
+                            <button id="btn-delete-session" onclick="deleteActiveSession()" style="display: none; padding: 6px 12px; background: #fee2e2; color: #ef4444; border: 1px solid #fecaca; border-radius: 6px; font-size: 12px; font-weight: 600; cursor: pointer; transition: 0.2s;" onmouseover="this.style.background='#fecaca'" onmouseout="this.style.background='#fee2e2'"><i class="ph ph-trash"></i> Hapus Sesi</button>
+                        </div>
+                        <div id="chat-preview-body" style="flex: 1; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; gap: 16px;">
+                            <div style="text-align: center; color: var(--text-muted); margin-top: 50px;">
+                                <i class="ph ph-chats" style="font-size: 48px; opacity: 0.5;"></i>
+                                <p>Klik salah satu sesi di sebelah kiri untuk melihat detail percakapan.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- SECTION: MONITORING - FEEDBACK -->
+            <div id="mon-feedback" class="page-section">
+                <div class="card">
+                    <div class="card-header"><h3 class="card-title">Feedback Pengguna</h3></div>
+                    <div class="table-responsive">
+                        <table>
+                            <thead><tr><th>ID Sesi</th><th>Komentar</th><th>Rating</th><th>Waktu</th></tr></thead>
+                            <tbody>
+                                <tr><td>#S-1088</td><td>Sangat membantu, terima kasih!</td><td>⭐⭐⭐⭐⭐</td><td>1 jam lalu</td></tr>
+                                <tr><td>#S-1070</td><td>Jawaban sedikit kurang spesifik.</td><td>⭐⭐⭐</td><td>Kemarin</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- SECTION: MONITORING - HANDOFF -->
+            <div id="mon-handoff" class="page-section">
+                <div class="card">
+                    <div class="card-header"><h3 class="card-title">Human Handoff (Perlu Balasan Admin)</h3></div>
+                    <div class="table-responsive">
+                        <table>
+                            <thead><tr><th>Mahasiswa</th><th>Pertanyaan Unresolved</th><th>Waktu</th><th>Aksi</th></tr></thead>
+                            <tbody>
+                                <tr><td>Anonim</td><td>Bagaimana status pengajuan dispensasi saya?</td><td>30 mnt lalu</td><td><button class="btn btn-primary">Balas Manual</button></td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- SECTION: MONITORING - ANALYTICS -->
+            <div id="mon-analytics" class="page-section">
+                <div class="card">
+                    <h3 class="card-title mb-4">Topik Paling Sering Ditanyakan</h3>
+                    <div style="display:flex; flex-direction:column; gap:16px;">
+                        <div>
+                            <div style="display:flex; justify-content:space-between; margin-bottom:8px; font-size:0.9rem;"><span>Pendaftaran PMB</span><span>45%</span></div>
+                            <div class="progress-wrapper"><div class="progress-bar" style="width: 45%;"></div></div>
+                        </div>
+                        <div>
+                            <div style="display:flex; justify-content:space-between; margin-bottom:8px; font-size:0.9rem;"><span>Biaya Kuliah (UKT)</span><span>30%</span></div>
+                            <div class="progress-wrapper"><div class="progress-bar" style="width: 30%;"></div></div>
+                        </div>
+                        <div>
+                            <div style="display:flex; justify-content:space-between; margin-bottom:8px; font-size:0.9rem;"><span>Jadwal Perkuliahan</span><span>15%</span></div>
+                            <div class="progress-wrapper"><div class="progress-bar" style="width: 15%;"></div></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- SECTION: MONITORING - TOKEN -->
+            <div id="mon-token" class="page-section">
+                <div class="card">
+                    <h3 class="card-title mb-4">Biaya & Pemakaian Token API</h3>
+                    <div class="grid-cards">
+                        <div class="stat-card" style="flex-direction:column; align-items:flex-start; gap:8px;">
+                            <p>Token Terpakai (Bulan Ini)</p>
+                            <h3>145,000 / 1,000,000</h3>
+                            <div class="progress-wrapper" style="width:100%;"><div class="progress-bar" style="width:14.5%;"></div></div>
+                        </div>
+                        <div class="stat-card" style="flex-direction:column; align-items:flex-start; gap:8px;">
+                            <p>Estimasi Biaya</p>
+                            <h3>$12.40</h3>
+                            <p style="color:var(--success); font-size:0.8rem;">Masih dalam batas aman</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- SECTION: APPEARANCE -->
+            <div id="app-widget" class="page-section">
+                <div class="card">
+                    <h3 class="card-title mb-4">Pengaturan Chat Widget UI</h3>
+                    <div class="flex-row mb-4">
+                        <div class="form-group flex-1">
+                            <label>Nama Bot</label>
+                            <input type="text" class="form-control" value="ISA Assistant">
+                        </div>
+                        <div class="form-group flex-1">
+                            <label>Warna Tema Utama (Hex)</label>
+                            <input type="color" class="form-control" value="#2563eb" style="height: 42px; padding: 4px;">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Salam Pembuka (Welcome Message)</label>
+                        <textarea class="form-control">Halo! Saya ISA (Indonusa Smart Assistance). Ada yang bisa saya bantu terkait informasi kampus hari ini?</textarea>
+                    </div>
+                    <div class="form-group">
+                        <label>Posisi Widget</label>
+                        <select class="form-control">
+                            <option>Kanan Bawah (Default)</option>
+                            <option>Kiri Bawah</option>
+                        </select>
+                    </div>
+                    <button class="btn btn-primary">Simpan Tampilan Widget</button>
+                </div>
+            </div>
+
+            <!-- SECTION: SYSTEM -->
+            <div id="sys-pengaturan" class="page-section">
+                <div class="card">
+                    <h3 class="card-title mb-4">Pengaturan Sistem Dasar</h3>
+                    <div class="form-group">
+                        <label>Nama Aplikasi Internal</label>
+                        <input type="text" class="form-control" value="ISA Chatbot Core">
+                    </div>
+                    <div class="form-group">
+                        <label>Zona Waktu Server</label>
+                        <select class="form-control">
+                            <option>Asia/Jakarta (WIB)</option>
+                            <option>Asia/Makassar (WITA)</option>
+                            <option>Asia/Jayapura (WIT)</option>
+                        </select>
+                    </div>
+                    <div class="form-group" style="display:flex; align-items:center; gap:12px; margin-top:20px;">
+                        <input type="checkbox" id="maint-mode" style="width:18px; height:18px;">
+                        <label for="maint-mode" style="margin:0; color:var(--danger); font-weight:600;">Aktifkan Maintenance Mode (Chatbot Offline sementara)</label>
+                    </div>
+                    <button class="btn btn-primary mt-4">Simpan Pengaturan</button>
+                </div>
+            </div>
+
+        </div>
+    </main>
+
+    <script>
+        // Logika Navigasi Sidebar
+        const navItems = document.querySelectorAll('.nav-item:not(.has-sub), .sub-item');
+        const sections = document.querySelectorAll('.page-section');
+        const topTitle = document.getElementById('top-title');
+
+        function removeActiveAll() {
+            document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('.sub-item').forEach(el => el.classList.remove('active'));
+        }
+
+        function setHeader(text) {
+            topTitle.textContent = text.trim();
+        }
+
+        function showSection(targetId) {
+            sections.forEach(sec => {
+                sec.classList.remove('active');
+                if(sec.id === targetId) sec.classList.add('active');
+            });
+        }
+
+        // Initialize click events for nav items that have data-target
+        document.querySelectorAll('[data-target]').forEach(item => {
+            if(!item.classList.contains('has-sub')) {
+                item.addEventListener('click', function() {
+                    removeActiveAll();
+                    this.classList.add('active');
+                    setHeader(this.textContent);
+                    
+                    // If sub-item, make parent nav-item active visually
+                    if(this.classList.contains('sub-item')){
+                        this.parentElement.previousElementSibling.classList.add('active');
+                    }
+
+                    showSection(this.getAttribute('data-target'));
+                });
+            }
+        });
+
+        // Toggle Submenu
+        function toggleSub(el) {
+            el.classList.toggle('open');
+            const subMenu = el.nextElementSibling;
+            subMenu.classList.toggle('open');
+        }
+
+        // --- Fetch Real Data for Dashboard & Knowledge Base ---
+        const API_URL = "http://localhost:8000";
+
+        // 1. Fetch Documents & Chunk Count
+        async function loadDocuments() {
+            try {
+                const res = await fetch(`${API_URL}/documents`);
+                const data = await res.json();
+                
+                // Update stats
+                document.getElementById('stat-docs').innerText = data.count;
+                document.getElementById('stat-chunks').innerText = data.database_chunks.toLocaleString();
+
+                // Render Table
+                const tbody = document.getElementById('docs-tbody');
+                tbody.innerHTML = '';
+                
+                if (data.documents.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;">Belum ada dokumen.</td></tr>';
+                    return;
+                }
+
+                data.documents.forEach(doc => {
+                    const dateStr = new Date(doc.modified_at * 1000).toLocaleDateString('id-ID', { year: 'numeric', month: 'long', day: 'numeric' });
+                    tbody.innerHTML += `
+                        <tr>
+                            <td>${doc.filename}</td>
+                            <td><span class="badge badge-success">PDF</span></td>
+                            <td>${doc.size_mb} MB</td>
+                            <td>${dateStr}</td>
+                            <td>
+                                <button class="btn btn-danger" style="padding:4px 8px;" onclick="deleteDoc('${doc.filename}')">
+                                    <i class="ph ph-trash"></i>
+                                </button>
+                            </td>
+                        </tr>
+                    `;
+                });
+            } catch (err) {
+                console.error("Gagal load dokumen:", err);
+            }
+        }
+
+        // 2. Upload Document
+        document.getElementById('file-upload').addEventListener('change', async function(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+            
+            const formData = new FormData();
+            formData.append('file', file);
+            
+            try {
+                // Show loading state
+                const uploadArea = document.querySelector('.upload-area h3');
+                const origText = uploadArea.innerText;
+                uploadArea.innerText = 'Mengunggah...';
+                
+                const res = await fetch(`${API_URL}/upload`, { method: 'POST', body: formData });
+                if (res.ok) {
+                    alert("Berhasil mengunggah dokumen!");
+                    loadDocuments();
+                } else {
+                    alert("Gagal mengunggah dokumen.");
+                }
+                uploadArea.innerText = origText;
+            } catch (err) {
+                alert("Error: " + err);
+            }
+            e.target.value = ''; // Reset
+        });
+
+        // 3. Delete Document
+        async function deleteDoc(filename) {
+            if (!confirm(`Yakin ingin menghapus ${filename}?`)) return;
+            try {
+                const res = await fetch(`${API_URL}/documents/${filename}`, { method: 'DELETE' });
+                if (res.ok) {
+                    loadDocuments();
+                } else {
+                    alert("Gagal menghapus.");
+                }
+            } catch(e) {
+                console.error(e);
+            }
+        }
+
+        // 4. Indexing (Real Backend)
+        async function startEmbedding() {
+            const wrap = document.getElementById('embedding-progress');
+            const bar = document.getElementById('embed-bar');
+            const pct = document.getElementById('embed-pct');
+            const statusText = document.getElementById('embed-status');
+            
+            wrap.style.display = 'block';
+            statusText.innerText = "Sistem sedang membaca dan memecah seluruh dokumen (harap tunggu)...";
+            bar.style.width = '30%';
+            pct.textContent = '30%';
+            
+            try {
+                const res = await fetch(`${API_URL}/index`, { method: 'POST' });
+                if (res.ok) {
+                    bar.style.width = '100%';
+                    pct.textContent = '100%';
+                    statusText.innerText = "Indexing Selesai!";
+                    setTimeout(() => { 
+                        alert("Berhasil! Vector Database telah diperbarui dengan file terbaru."); 
+                        wrap.style.display='none'; 
+                        bar.style.width='0%';
+                        loadDocuments();
+                    }, 500);
+                } else {
+                    throw new Error("Gagal indexing");
+                }
+            } catch(err) {
+                alert("Terjadi kesalahan saat indexing: " + err);
+                wrap.style.display='none';
+            }
+        }
+
+        // 5. Playground Chat
+        let playgroundSessionId = "#S-PLAY-" + Math.random().toString(36).substring(2, 6).toUpperCase();
+
+        async function sendPlaygroundMsg() {
+            const input = document.getElementById('pg-input');
+            const text = input.value.trim();
+            if (!text) return;
+            
+            const chatArea = document.getElementById('pg-chat');
+            
+            // Add user message
+            chatArea.innerHTML += `
+                <div style="align-self:flex-end; background:var(--primary); color:white; padding:12px 16px; border-radius:12px; max-width:80%;">
+                    ${text}
+                </div>
+            `;
+            input.value = '';
+            
+            try {
+                const res = await fetch(`${API_URL}/query`, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({message: text, session_id: playgroundSessionId})
+                });
+                const data = await res.json();
+                
+                let botReply = data.answer.replace(/\n/g, '<br>');
+                if (data.type === 'rag_query' && data.sources && data.sources.length > 0) {
+                    botReply += '<br><br><small><strong>Sumber:</strong><br>';
+                    data.sources.forEach(src => botReply += `- ${src.filename} (Hal. ${src.page})<br>`);
+                    botReply += '</small>';
+                }
+                
+                chatArea.innerHTML += `
+                    <div style="align-self:flex-start; background:white; padding:12px 16px; border-radius:12px; box-shadow:0 1px 2px rgba(0,0,0,0.05); max-width:80%;">
+                        ${botReply}
+                    </div>
+                `;
+                chatArea.scrollTop = chatArea.scrollHeight;
+            } catch(e) {
+                alert("Error playground: " + e);
+            }
+        }
+
+        // 6. Settings & Chat History (Fase 2)
+        async function loadSettings() {
+            try {
+                const res = await fetch(`${API_URL}/api/settings`);
+                const data = await res.json();
+                
+                if (data.system_prompt) document.getElementById('input-sys-prompt').value = data.system_prompt;
+                if (data.llm_model) document.getElementById('input-llm').value = data.llm_model;
+                if (data.temperature) {
+                    document.getElementById('input-temp').value = data.temperature;
+                    document.getElementById('val-temp').innerText = data.temperature;
+                }
+                if (data.top_k) {
+                    document.getElementById('input-topk').value = data.top_k;
+                    document.getElementById('val-topk').innerText = data.top_k;
+                }
+                if (data.fallback_response) document.getElementById('input-fallback').value = data.fallback_response;
+                if (data.blocked_words) document.getElementById('input-blocked').value = data.blocked_words;
+                if (data.prompt_injection_guard) document.getElementById('block-prompt-inj').checked = data.prompt_injection_guard === "1";
+            } catch (err) {
+                console.error("Gagal load settings:", err);
+            }
+        }
+
+        async function saveSettings(type) {
+            let payload = {};
+            if (type === 'prompt') {
+                payload.system_prompt = document.getElementById('input-sys-prompt').value;
+            } else if (type === 'model') {
+                payload.llm_model = document.getElementById('input-llm').value;
+                payload.temperature = document.getElementById('input-temp').value;
+                payload.top_k = document.getElementById('input-topk').value;
+            } else if (type === 'fallback') {
+                payload.fallback_response = document.getElementById('input-fallback').value;
+            } else if (type === 'guardrail') {
+                payload.blocked_words = document.getElementById('input-blocked').value;
+                payload.prompt_injection_guard = document.getElementById('block-prompt-inj').checked ? "1" : "0";
+            }
+            
+            try {
+                const res = await fetch(`${API_URL}/api/settings`, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify(payload)
+                });
+                if (res.ok) alert("Pengaturan berhasil disimpan!");
+                else alert("Gagal menyimpan pengaturan.");
+            } catch (e) {
+                alert("Error: " + e);
+            }
+        }
+        
+        let groupedSessions = {};
+        let activeChatSession = null;
+        
+        async function loadChats() {
+            try {
+                const res = await fetch(`${API_URL}/api/chat_history`);
+                const chats = await res.json(); // API returns chats ordered by created_at DESC
+                
+                const listContainer = document.getElementById('chat-list');
+                
+                if (chats.length === 0) {
+                    listContainer.innerHTML = '<div style="padding: 20px; text-align: center; color: var(--text-muted);">Belum ada riwayat.</div>';
+                    return;
+                }
+                
+                // Group by session_id
+                groupedSessions = {};
+                chats.forEach(chat => {
+                    if (!groupedSessions[chat.session_id]) {
+                        groupedSessions[chat.session_id] = {
+                            session_id: chat.session_id,
+                            last_message: chat.user_message,
+                            last_time: chat.created_at,
+                            history: []
+                        };
+                    }
+                    // Since chats are DESC, we unshift to make history array chronological (oldest first)
+                    groupedSessions[chat.session_id].history.unshift(chat);
+                });
+                
+                listContainer.innerHTML = '';
+                
+                Object.values(groupedSessions).forEach(session => {
+                    const dateStr = new Date(session.last_time + 'Z').toLocaleString('id-ID', { hour:'2-digit', minute:'2-digit', day:'numeric', month:'short' });
+                    
+                    const isActive = activeChatSession === session.session_id ? "background: #eff6ff; border-left: 3px solid var(--primary);" : "border-left: 3px solid transparent;";
+                    
+                    // Escape for safe HTML injection
+                    const safeSessionId = session.session_id.replace(/'/g, "\\'");
+                    
+                    listContainer.innerHTML += `
+                        <div style="padding: 12px 16px; border-bottom: 1px solid var(--border); cursor: pointer; ${isActive} transition: all 0.2s;" 
+                             onclick="viewChatTranscript('${safeSessionId}')"
+                             onmouseover="this.style.background='#f8fafc'" 
+                             onmouseout="this.style.background= (activeChatSession === '${safeSessionId}') ? '#eff6ff' : 'white'">
+                            <div style="display:flex; justify-content:space-between; margin-bottom:4px;">
+                                <strong style="color:var(--text-main); font-size:14px;">${session.session_id}</strong>
+                                <span style="color:var(--text-muted); font-size:12px;">${dateStr}</span>
+                            </div>
+                            <div style="color:var(--text-muted); font-size:13px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">
+                                ${session.last_message}
+                            </div>
+                        </div>
+                    `;
+                });
+            } catch (err) {
+                console.error("Gagal load chats:", err);
+            }
+        }
+        
+        function viewChatTranscript(sessionId) {
+            activeChatSession = sessionId;
+            document.getElementById('chat-preview-title').innerText = `Transkrip Sesi: ${sessionId}`;
+            document.getElementById('btn-delete-session').style.display = 'block';
+            
+            const body = document.getElementById('chat-preview-body');
+            body.innerHTML = '';
+            
+            const sessionData = groupedSessions[sessionId];
+            if (!sessionData) return;
+            
+            sessionData.history.forEach(chat => {
+                const safeUserMsg = (chat.user_message || "").replace(/\\n/g, '<br>').replace(/\n/g, '<br>');
+                const safeBotMsg = (chat.bot_response || "").replace(/\\n/g, '<br>').replace(/\n/g, '<br>');
+                
+                body.innerHTML += `
+                    <div style="align-self:flex-end; background:var(--primary); color:white; padding:12px 16px; border-radius:12px; max-width:80%;">
+                        ${safeUserMsg}
+                    </div>
+                    <div style="align-self:flex-start; background:white; padding:12px 16px; border-radius:12px; box-shadow:0 1px 2px rgba(0,0,0,0.05); max-width:80%; border:1px solid var(--border);">
+                        ${safeBotMsg}
+                    </div>
+                `;
+            });
+            
+            // Reload list to apply active highlight without re-fetching if possible, but loadChats re-fetches
+            // Just update UI manually to avoid network request
+            const listContainer = document.getElementById('chat-list');
+            Array.from(listContainer.children).forEach(child => {
+                if(child.innerText.includes(sessionId)) {
+                    child.style.background = '#eff6ff';
+                    child.style.borderLeft = '3px solid var(--primary)';
+                    child.onmouseout = function() { this.style.background='#eff6ff'; };
+                } else {
+                    child.style.background = 'white';
+                    child.style.borderLeft = '3px solid transparent';
+                    child.onmouseout = function() { this.style.background='white'; };
+                }
+            });
+        }
+        
+        async function deleteActiveSession() {
+            if (!activeChatSession) return;
+            if (!confirm(`Apakah Anda yakin ingin menghapus seluruh riwayat percakapan untuk sesi ${activeChatSession}?`)) return;
+            
+            try {
+                const res = await fetch(`${API_URL}/api/chats/${encodeURIComponent(activeChatSession)}`, {
+                    method: 'DELETE'
+                });
+                
+                if (res.ok) {
+                    activeChatSession = null;
+                    document.getElementById('chat-preview-title').innerText = `Pilih sesi dari panel kiri`;
+                    document.getElementById('btn-delete-session').style.display = 'none';
+                    document.getElementById('chat-preview-body').innerHTML = `
+                        <div style="text-align:center; color:var(--text-muted); font-size: 13px; margin-top: 50px;">
+                            Pratinjau obrolan akan muncul di sini...
+                        </div>`;
+                    await loadChats();
+                    loadDashboardStats(); // Refresh stats since history was deleted
+                } else {
+                    const data = await res.json();
+                    alert("Gagal menghapus: " + data.detail);
+                }
+            } catch (err) {
+                alert("Kesalahan jaringan: " + err);
+            }
+        }
+
+        async function loadDashboardStats() {
+            try {
+                const res = await fetch(`${API_URL}/api/dashboard_stats`);
+                const data = await res.json();
+                
+                document.getElementById('stat-queries').innerText = data.today_queries.toLocaleString();
+                document.getElementById('stat-users').innerText = data.active_users.toLocaleString();
+                document.getElementById('stat-tokens').innerText = data.tokens_used.toLocaleString();
+                document.getElementById('stat-cost').innerText = "$" + data.cost_usd.toFixed(4);
+            } catch (err) {
+                console.error("Gagal load dashboard stats:", err);
+            }
+        }
+
+        // Jalankan saat halaman dibuka
+        loadDocuments();
+        loadSettings();
+        loadChats();
+        loadDashboardStats();
+        
+        // Refresh chats and stats every 10 seconds
+        setInterval(() => {
+            loadChats();
+            loadDashboardStats();
+        }, 10000);
+
+    </script>
+</body>
+</html>
