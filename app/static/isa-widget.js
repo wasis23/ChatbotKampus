@@ -1,7 +1,10 @@
 // ISA AI Assistant - Bubble Chat Widget
 (function() {
-    // API Configuration
-    const API_URL = 'http://localhost:8000'; // Sesuaikan saat produksi
+    // API Configuration (Deteksi Otomatis Host)
+    let API_URL = window.location.origin;
+    if (document.currentScript && document.currentScript.src) {
+        API_URL = new URL(document.currentScript.src).origin;
+    }
     
     // Session Management
     let sessionId = localStorage.getItem('isa_session_id');

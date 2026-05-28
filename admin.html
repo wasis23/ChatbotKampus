@@ -822,7 +822,7 @@
         }
 
         // --- Fetch Real Data for Dashboard & Knowledge Base ---
-        const API_URL = "http://localhost:8000";
+        const API_URL = window.location.origin;
 
         // 1. Fetch Documents & Chunk Count
         async function loadDocuments() {
