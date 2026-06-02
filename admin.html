@@ -846,8 +846,8 @@
                         tbody.innerHTML += `
                             <tr>
                                 <td>${doc.filename}</td>
-                                <td><span class="badge badge-success">${doc.filename.endsWith('.md') ? 'MD' : 'PDF'}</span></td>
-                                <td>${doc.size_mb} MB</td>
+                                <td>${doc.filename.endsWith('.md') ? '<span class="badge" style="background:#dbeafe; color:#1e40af;">MD</span>' : '<span class="badge badge-success">PDF</span>'}</td>
+                                <td>${doc.size_formatted}</td>
                                 <td>${dateStr}</td>
                                 <td>
                                     <button class="btn btn-danger" style="padding:4px 8px;" onclick="deleteDoc('${doc.filename}')">

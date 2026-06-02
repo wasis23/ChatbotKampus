@@ -268,9 +268,16 @@ def start_api_server():
                 if f.endswith(".pdf") or f.endswith(".md"):
                     filepath = os.path.join(service.documents_dir, f)
                     stats = os.stat(filepath)
+                    
+                    size_bytes = stats.st_size
+                    if size_bytes < 1024 * 1024:
+                        size_str = f"{round(size_bytes / 1024, 2)} KB"
+                    else:
+                        size_str = f"{round(size_bytes / (1024 * 1024), 2)} MB"
+                        
                     files_info.append({
                         "filename": f,
-                        "size_mb": round(stats.st_size / (1024 * 1024), 2),
+                        "size_formatted": size_str,
                         "modified_at": stats.st_mtime
                     })
             return {
