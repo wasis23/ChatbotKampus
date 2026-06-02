@@ -260,12 +260,12 @@ def start_api_server():
 
     @app.get("/documents")
     def get_documents_list():
-        """Endpoint untuk mendapatkan daftar seluruh berkas PDF akademik."""
+        """Endpoint untuk mendapatkan daftar seluruh berkas PDF dan MD akademik."""
         try:
             service = get_rag()
             files_info = []
             for f in os.listdir(service.documents_dir):
-                if f.endswith(".pdf"):
+                if f.endswith(".pdf") or f.endswith(".md"):
                     filepath = os.path.join(service.documents_dir, f)
                     stats = os.stat(filepath)
                     files_info.append({
@@ -283,18 +283,20 @@ def start_api_server():
 
     @app.get("/download/{filename}")
     def download_file(filename: str):
-        """Endpoint untuk mengunduh berkas PDF akademik resmi secara langsung."""
+        """Endpoint untuk mengunduh berkas akademik resmi secara langsung."""
         try:
             service = get_rag()
             file_path = os.path.join(service.documents_dir, filename)
             # Validasi keamanan untuk mencegah traversal direktori
-            if not os.path.exists(file_path) or not filename.endswith(".pdf"):
+            if not os.path.exists(file_path) or not (filename.endswith(".pdf") or filename.endswith(".md")):
                 raise HTTPException(status_code=404, detail="Berkas dokumen tidak ditemukan di server.")
+            
+            media_type = "text/markdown" if filename.endswith(".md") else "application/pdf"
             
             return FileResponse(
                 path=file_path, 
                 filename=filename, 
-                media_type="application/pdf"
+                media_type=media_type
             )
         except HTTPException as he:
             raise he
@@ -303,11 +305,11 @@ def start_api_server():
 
     @app.post("/upload")
     async def upload_document(file: UploadFile = File(...)):
-        """Endpoint untuk mengunggah dokumen PDF baru ke Knowledge Base."""
+        """Endpoint untuk mengunggah dokumen PDF atau MD baru ke Knowledge Base."""
         try:
             service = get_rag()
-            if not file.filename.endswith(".pdf"):
-                raise HTTPException(status_code=400, detail="Hanya file PDF yang diperbolehkan.")
+            if not (file.filename.endswith(".pdf") or file.filename.endswith(".md")):
+                raise HTTPException(status_code=400, detail="Hanya file PDF dan MD yang diperbolehkan.")
             
             file_path = os.path.join(service.documents_dir, file.filename)
             with open(file_path, "wb") as f:
@@ -319,11 +321,11 @@ def start_api_server():
 
     @app.delete("/documents/{filename}")
     def delete_document(filename: str):
-        """Endpoint untuk menghapus dokumen PDF dari Knowledge Base."""
+        """Endpoint untuk menghapus dokumen PDF atau MD dari Knowledge Base."""
         try:
             service = get_rag()
             file_path = os.path.join(service.documents_dir, filename)
-            if not os.path.exists(file_path) or not filename.endswith(".pdf"):
+            if not os.path.exists(file_path) or not (filename.endswith(".pdf") or filename.endswith(".md")):
                 raise HTTPException(status_code=404, detail="Berkas tidak ditemukan.")
             
             os.remove(file_path)
