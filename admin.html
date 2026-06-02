@@ -514,8 +514,8 @@
                         <div class="stat-info"><p>Total Chunk di Vector DB</p><h3 id="stat-chunks">1,420</h3></div>
                     </div>
                     <div class="stat-card">
-                        <div class="stat-icon" style="background:#dcfce3; color:#16a34a;"><i class="ph ph-check-circle"></i></div>
-                        <div class="stat-info"><p>Status Sync</p><h3 style="color:#16a34a;">Up to Date</h3></div>
+                        <div class="stat-icon" id="stat-sync-icon" style="background:#dcfce3; color:#16a34a;"><i class="ph ph-check-circle"></i></div>
+                        <div class="stat-info"><p>Status Sync</p><h3 id="stat-sync" style="color:#16a34a;">Up to Date</h3></div>
                     </div>
                 </div>
             </div>
@@ -840,25 +840,41 @@
                 
                 if (data.documents.length === 0) {
                     tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;">Belum ada dokumen.</td></tr>';
-                    return;
+                } else {
+                    data.documents.forEach(doc => {
+                        const dateStr = new Date(doc.modified_at * 1000).toLocaleDateString('id-ID', { year: 'numeric', month: 'long', day: 'numeric' });
+                        tbody.innerHTML += `
+                            <tr>
+                                <td>${doc.filename}</td>
+                                <td><span class="badge badge-success">${doc.filename.endsWith('.md') ? 'MD' : 'PDF'}</span></td>
+                                <td>${doc.size_mb} MB</td>
+                                <td>${dateStr}</td>
+                                <td>
+                                    <button class="btn btn-danger" style="padding:4px 8px;" onclick="deleteDoc('${doc.filename}')">
+                                        <i class="ph ph-trash"></i>
+                                    </button>
+                                </td>
+                            </tr>
+                        `;
+                    });
                 }
-
-                data.documents.forEach(doc => {
-                    const dateStr = new Date(doc.modified_at * 1000).toLocaleDateString('id-ID', { year: 'numeric', month: 'long', day: 'numeric' });
-                    tbody.innerHTML += `
-                        <tr>
-                            <td>${doc.filename}</td>
-                            <td><span class="badge badge-success">PDF</span></td>
-                            <td>${doc.size_mb} MB</td>
-                            <td>${dateStr}</td>
-                            <td>
-                                <button class="btn btn-danger" style="padding:4px 8px;" onclick="deleteDoc('${doc.filename}')">
-                                    <i class="ph ph-trash"></i>
-                                </button>
-                            </td>
-                        </tr>
-                    `;
-                });
+                
+                // Cek Status Sync sederhana (jika tidak sinkron antara jumlah file kosong dan chunk tidak 0)
+                const syncEl = document.getElementById('stat-sync');
+                const syncIcon = document.getElementById('stat-sync-icon');
+                if (data.count === 0 && data.database_chunks > 0) {
+                    syncEl.innerText = 'Perlu Indexing';
+                    syncEl.style.color = '#dc2626';
+                    syncIcon.style.background = '#fee2e2';
+                    syncIcon.style.color = '#dc2626';
+                    syncIcon.innerHTML = '<i class="ph ph-warning-circle"></i>';
+                } else {
+                    syncEl.innerText = 'Up to Date';
+                    syncEl.style.color = '#16a34a';
+                    syncIcon.style.background = '#dcfce3';
+                    syncIcon.style.color = '#16a34a';
+                    syncIcon.innerHTML = '<i class="ph ph-check-circle"></i>';
+                }
             } catch (err) {
                 console.error("Gagal load dokumen:", err);
             }
@@ -880,8 +896,15 @@
                 
                 const res = await fetch(`${API_URL}/upload`, { method: 'POST', body: formData });
                 if (res.ok) {
-                    alert("Berhasil mengunggah dokumen!");
+                    alert("Berhasil mengunggah dokumen! Jangan lupa klik Mulai Indexing.");
                     loadDocuments();
+                    
+                    // Force flag out of sync
+                    document.getElementById('stat-sync').innerText = 'Perlu Indexing';
+                    document.getElementById('stat-sync').style.color = '#dc2626';
+                    document.getElementById('stat-sync-icon').style.background = '#fee2e2';
+                    document.getElementById('stat-sync-icon').style.color = '#dc2626';
+                    document.getElementById('stat-sync-icon').innerHTML = '<i class="ph ph-warning-circle"></i>';
                 } else {
                     alert("Gagal mengunggah dokumen.");
                 }
@@ -898,7 +921,15 @@
             try {
                 const res = await fetch(`${API_URL}/documents/${filename}`, { method: 'DELETE' });
                 if (res.ok) {
+                    alert("Dokumen berhasil dihapus! Jangan lupa klik Mulai Indexing.");
                     loadDocuments();
+                    
+                    // Force flag out of sync
+                    document.getElementById('stat-sync').innerText = 'Perlu Indexing';
+                    document.getElementById('stat-sync').style.color = '#dc2626';
+                    document.getElementById('stat-sync-icon').style.background = '#fee2e2';
+                    document.getElementById('stat-sync-icon').style.color = '#dc2626';
+                    document.getElementById('stat-sync-icon').innerHTML = '<i class="ph ph-warning-circle"></i>';
                 } else {
                     alert("Gagal menghapus.");
                 }

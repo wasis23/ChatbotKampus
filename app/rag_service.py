@@ -1,6 +1,6 @@
 import os
 from typing import Dict, Any, List, Optional
-from app.pdf_loader import load_pdf_documents
+from app.pdf_loader import load_documents
 from app.chunking import split_documents
 from app.embedding import get_embedding_model
 from app.retrieval import RetrievalService
@@ -25,7 +25,7 @@ def detect_document_request(query: str, documents_dir: str) -> Optional[Dict[str
     if not os.path.exists(documents_dir):
         return None
         
-    files = [f for f in os.listdir(documents_dir) if f.endswith(".pdf")]
+    files = [f for f in os.listdir(documents_dir) if f.endswith(".pdf") or f.endswith(".md")]
     if not files:
         return None
         
@@ -35,7 +35,7 @@ def detect_document_request(query: str, documents_dir: str) -> Optional[Dict[str
     
     for filename in files:
         # Normalisasi nama berkas ("pedoman_skripsi.pdf" -> "pedoman skripsi")
-        clean_name = filename.lower().replace(".pdf", "").replace("_", " ").replace("-", " ")
+        clean_name = filename.lower().replace(".pdf", "").replace(".md", "").replace("_", " ").replace("-", " ")
         
         # Pola A: Kecocokan Persis (Sub-string)
         if clean_name in query_lower:
@@ -108,11 +108,14 @@ class RAGService:
         print_info("Memulai pemrosesan pipeline dokumen (Indexing)...")
         
         # 1. Ekstraksi PDF & Preprocessing Tabel
-        documents = load_pdf_documents(self.documents_dir)
+        documents = load_documents(self.documents_dir)
         if not documents:
+            self.retrieval_service.delete_collection()
             return {
-                "status": "error",
-                "message": f"Tidak ada file PDF ditemukan di folder '{self.documents_dir}'. Harap letakkan file PDF atau jalankan script pembuat sampel dokumen terlebih dahulu."
+                "status": "success",
+                "message": f"Folder dokumen kosong. Database vektor telah dibersihkan.",
+                "document_count": 0,
+                "chunk_count": 0
             }
             
         # 2. Pemecahan Dokumen Menjadi Chunk Semantis

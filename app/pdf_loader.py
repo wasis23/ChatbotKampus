@@ -24,10 +24,10 @@ def clean_extracted_text(text: str) -> str:
     
     return text.strip()
 
-def load_pdf_documents(documents_dir: str) -> List[Dict[str, Any]]:
+def load_documents(documents_dir: str) -> List[Dict[str, Any]]:
     """
-    Membaca semua file PDF di direktori documents_dir, melakukan ekstraksi teks 
-    dan tabel secara hibrida, lalu mengembalikan daftar dokumen terstruktur.
+    Membaca semua file PDF dan Markdown (.md) di direktori documents_dir, 
+    melakukan ekstraksi teks dan tabel secara hibrida, lalu mengembalikan daftar dokumen terstruktur.
     """
     documents = []
     
@@ -36,38 +36,60 @@ def load_pdf_documents(documents_dir: str) -> List[Dict[str, Any]]:
         os.makedirs(documents_dir, exist_ok=True)
         return documents
         
-    pdf_files = [f for f in os.listdir(documents_dir) if f.endswith(".pdf")]
+    all_files = [f for f in os.listdir(documents_dir) if f.endswith(".pdf") or f.endswith(".md")]
     
-    if not pdf_files:
-        print_warning(f"Tidak ada berkas PDF ditemukan di folder '{documents_dir}'.")
+    if not all_files:
+        print_warning(f"Tidak ada berkas PDF atau MD ditemukan di folder '{documents_dir}'.")
         return documents
         
-    for filename in pdf_files:
-        pdf_path = os.path.join(documents_dir, filename)
-        # Bentuk nama kategori yang ramah dari nama file (misal "pedoman_skripsi.pdf" -> "Pedoman Skripsi")
-        category = filename.replace(".pdf", "").replace("_", " ").title()
+    for filename in all_files:
+        file_path = os.path.join(documents_dir, filename)
         
-        print_info(f"Mengekstrak berkas PDF: {filename}...")
-        
-        try:
-            with pdfplumber.open(pdf_path) as pdf:
-                for page_idx, page in enumerate(pdf.pages, 1):
-                    # A. Ekstraksi Tabel & Konversi ke Narasi
-                    tables = page.extract_tables()
-                    table_narrative = ""
-                    if tables:
-                        table_narrative = process_tables_in_page(tables, filename)
-                    
-                    # B. Ekstraksi Teks Halaman Standard
-                    page_text = page.extract_text() or ""
-                    
-                    # C. Penggabungan Teks & Tabel
-                    full_content = page_text
-                    if table_narrative:
-                        # Sisipkan hasil narasi tabel di bagian akhir konten halaman
-                        full_content += "\n\n" + table_narrative
+        if filename.endswith(".pdf"):
+            category = filename.replace(".pdf", "").replace("_", " ").title()
+            print_info(f"Mengekstrak berkas PDF: {filename}...")
+            
+            try:
+                with pdfplumber.open(file_path) as pdf:
+                    for page_idx, page in enumerate(pdf.pages, 1):
+                        # A. Ekstraksi Tabel & Konversi ke Narasi
+                        tables = page.extract_tables()
+                        table_narrative = ""
+                        if tables:
+                            table_narrative = process_tables_in_page(tables, filename)
                         
-                    cleaned_content = clean_extracted_text(full_content)
+                        # B. Ekstraksi Teks Halaman Standard
+                        page_text = page.extract_text() or ""
+                        
+                        # C. Penggabungan Teks & Tabel
+                        full_content = page_text
+                        if table_narrative:
+                            full_content += "\n\n" + table_narrative
+                            
+                        cleaned_content = clean_extracted_text(full_content)
+                        
+                        if cleaned_content:
+                            documents.append({
+                                "content": cleaned_content,
+                                "metadata": {
+                                    "source": filename,
+                                    "category": category,
+                                    "page": page_idx
+                                }
+                            })
+                            
+            except Exception as e:
+                print_warning(f"Terjadi kesalahan saat membaca {filename}: {str(e)}")
+                continue
+                
+        elif filename.endswith(".md"):
+            category = filename.replace(".md", "").replace("_", " ").title()
+            print_info(f"Mengekstrak berkas Markdown: {filename}...")
+            
+            try:
+                with open(file_path, "r", encoding="utf-8") as f:
+                    content = f.read()
+                    cleaned_content = clean_extracted_text(content)
                     
                     if cleaned_content:
                         documents.append({
@@ -75,13 +97,12 @@ def load_pdf_documents(documents_dir: str) -> List[Dict[str, Any]]:
                             "metadata": {
                                 "source": filename,
                                 "category": category,
-                                "page": page_idx
+                                "page": 1 # Markdown dianggap 1 halaman panjang
                             }
                         })
-                        
-        except Exception as e:
-            print_warning(f"Terjadi kesalahan saat membaca {filename} (Halaman {page_idx if 'page_idx' in locals() else 'awal'}): {str(e)}")
-            continue
+            except Exception as e:
+                print_warning(f"Terjadi kesalahan saat membaca {filename}: {str(e)}")
+                continue
             
-    print_info(f"Selesai! Berhasil memuat total {len(documents)} halaman dari {len(pdf_files)} berkas PDF.")
+    print_info(f"Selesai! Berhasil memuat total {len(documents)} bagian dari {len(all_files)} berkas.")
     return documents
